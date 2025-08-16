@@ -1,76 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Expense Tracker</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ExpenseTracker Pro</title>
+  <link rel="stylesheet" href="style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 </head>
-<body>
-  <div class="container">
-    <!-- Register Form -->
-    <div id="registerDiv" class="auth-box">
-      <h2>Register</h2>
-      <input type="text" id="regName" placeholder="Name">
-      <input type="email" id="regEmail" placeholder="Email">
-      <input type="password" id="regPassword" placeholder="Password">
-      <button onclick="register()">Register</button>
-      <p>Already have an account? <span onclick="showLogin()">Login</span></p>
-    </div>
+<body class="light">
 
-    <!-- Login Form -->
-    <div id="loginDiv" class="auth-box" style="display:none;">
-      <h2>Login</h2>
-      <input type="email" id="loginEmail" placeholder="Email">
-      <input type="password" id="loginPassword" placeholder="Password">
-      <button onclick="login()">Login</button>
-      <p>Don't have an account? <span onclick="showRegister()">Register</span></p>
-    </div>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo"><i class="fa-solid fa-wallet"></i> ExpenseTracker</div>
+    <nav>
+      <ul>
+        <li onclick="showTab('authTab')" id="nav-auth"><i class="fa-solid fa-right-to-bracket"></i> Auth</li>
+        <li onclick="showTab('dashboardTab')" id="nav-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</li>
+        <li onclick="showTab('expensesTab')" id="nav-expenses"><i class="fa-solid fa-list"></i> Expenses</li>
+        <li onclick="showTab('reportsTab')" id="nav-reports"><i class="fa-solid fa-chart-pie"></i> Reports</li>
+        <li onclick="showTab('settingsTab')" id="nav-settings"><i class="fa-solid fa-gear"></i> Settings</li>
+      </ul>
+    </nav>
+  </aside>
 
-    <!-- Dashboard -->
-    <div id="dashboardDiv" style="display:none;">
-      <h2>Expense Tracker Dashboard</h2>
+  <!-- Main -->
+  <main class="mainContent">
+    <header>
+      <div class="userHeader">
+        <img id="userAvatarHeader" class="avatar sm" src="" alt="avatar" />
+        <span id="userName"></span>
+      </div>
+      <div class="headerBtns">
+        <button onclick="toggleTheme()" class="iconBtn" title="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+        <button onclick="logout()" class="logoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
+      </div>
+    </header>
 
-      <div class="expense-form">
-        <input type="number" id="amount" placeholder="Amount">
-        <select id="category">
-          <option value="">Select Category</option>
+    <!-- Auth TAB -->
+    <section id="authTab" class="tabContent">
+      <div class="authGrid">
+        <div id="loginDiv" class="authCard proCard">
+          <h2><i class="fa-solid fa-right-to-bracket"></i> Login</h2>
+          <div class="inputWrap"><i class="fa-regular fa-envelope"></i><input type="email" id="loginEmail" placeholder="Email"/></div>
+          <div class="inputWrap"><i class="fa-solid fa-key"></i><input type="password" id="loginPassword" placeholder="Password"/></div>
+          <div class="rowBetween">
+            <label class="checkbox"><input type="checkbox" id="rememberMe"/> Remember me</label>
+            <button class="linkBtn" onclick="showRegister()">Create account</button>
+          </div>
+          <button class="primaryBtn" onclick="login()"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</button>
+        </div>
+
+        <div id="registerDiv" class="authCard proCard" style="display:none;">
+          <h2><i class="fa-solid fa-user-plus"></i> Register</h2>
+          <div class="inputWrap"><i class="fa-regular fa-user"></i><input type="text" id="regName" placeholder="Full name"/></div>
+          <div class="inputWrap"><i class="fa-regular fa-envelope"></i><input type="email" id="regEmail" placeholder="Email"/></div>
+          <div class="inputWrap"><i class="fa-solid fa-key"></i><input type="password" id="regPassword" placeholder="Password (min 6)"/></div>
+          <div class="rowBetween">
+            <span></span>
+            <button class="linkBtn" onclick="showLogin()">I have an account</button>
+          </div>
+          <button class="successBtn" onclick="register()"><i class="fa-solid fa-user-check"></i> Register</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dashboard TAB -->
+    <section id="dashboardTab" class="tabContent" style="display:none;">
+      <div class="statsContainer">
+        <div class="card gradient1">
+          <h3>Total Expenses</h3>
+          <p id="totalExpense">₹0</p>
+        </div>
+        <div class="card gradient2">
+          <h3>Top Category</h3>
+          <p id="topCategory">-</p>
+        </div>
+        <div class="card gradient3">
+          <h3>Monthly Spending</h3>
+          <p id="monthlyExpense">₹0</p>
+        </div>
+      </div>
+      <div class="proCard">
+        <canvas id="expenseChart" height="160"></canvas>
+      </div>
+    </section>
+
+    <!-- Expenses TAB -->
+    <section id="expensesTab" class="tabContent" style="display:none;">
+      <div class="proCard addExpenseCard">
+        <h3><i class="fa-solid fa-plus"></i> Add Expense</h3>
+        <div class="grid2">
+          <input type="number" id="amount" placeholder="Amount"/>
+          <select id="category">
+            <option value="Food">Food</option>
+            <option value="Transport">Transport</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Bills">Bills</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Health">Health</option>
+            <option value="Education">Education</option>
+          </select>
+        </div>
+        <div class="grid2">
+          <input type="date" id="date"/>
+          <input type="text" id="description" placeholder="Short description"/>
+        </div>
+        <button class="addBtn" onclick="addExpense()"><i class="fa-solid fa-circle-plus"></i> Add</button>
+      </div>
+
+      <div class="filterContainer">
+        <div class="inputWrap full"><i class="fa-solid fa-magnifying-glass"></i><input id="searchDesc" placeholder="Search description..." oninput="loadExpenses()"/></div>
+        <select id="filterCategory" onchange="loadExpenses()">
+          <option value="">All Categories</option>
           <option value="Food">Food</option>
           <option value="Transport">Transport</option>
           <option value="Shopping">Shopping</option>
           <option value="Bills">Bills</option>
           <option value="Entertainment">Entertainment</option>
-          <option value="Other">Other</option>
+          <option value="Health">Health</option>
+          <option value="Education">Education</option>
         </select>
-        <input type="text" id="description" placeholder="Description">
-        <button onclick="addExpense()">Add Expense</button>
+        <input type="month" id="filterMonth" onchange="loadExpenses()" />
+        <button class="iconBtn" title="Export CSV" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i></button>
       </div>
 
-      <h3>Total Expense: ₹<span id="totalExpense">0</span></h3>
+      <div id="expenseList" class="expenseList"></div>
+    </section>
 
-      <div id="expenseList" class="expense-list"></div>
+    <!-- Reports TAB -->
+    <section id="reportsTab" class="tabContent" style="display:none;">
+      <div class="proCard">
+        <h3><i class="fa-solid fa-chart-line"></i> Monthly Trend</h3>
+        <canvas id="monthlyChart" height="160"></canvas>
+      </div>
+    </section>
 
-      <canvas id="expenseChart" width="400" height="400"></canvas>
-    </div>
-  </div>
+    <!-- Settings TAB -->
+    <section id="settingsTab" class="tabContent" style="display:none;">
+      <div class="settingsGrid">
+        <!-- Profile -->
+        <div class="proCard">
+          <h3><i class="fa-regular fa-id-card"></i> Profile</h3>
+          <div class="profileRow">
+            <img id="userAvatar" class="avatar" src="" alt="avatar"/>
+            <div class="grow">
+              <div class="inputWrap"><i class="fa-regular fa-user"></i><input id="setName" placeholder="Full name"/></div>
+              <div class="inputWrap"><i class="fa-regular fa-envelope"></i><input id="setEmail" placeholder="Email"/></div>
+              <div class="inputWrap"><i class="fa-regular fa-image"></i><input id="setAvatar" placeholder="Avatar URL (optional)"/></div>
+            </div>
+          </div>
+          <button class="primaryBtn" onclick="saveProfile()"><i class="fa-solid fa-floppy-disk"></i> Save Profile</button>
+        </div>
 
-  <!-- Edit Modal -->
+        <!-- Password -->
+        <div class="proCard">
+          <h3><i class="fa-solid fa-lock"></i> Change Password</h3>
+          <div class="inputWrap"><i class="fa-solid fa-key"></i><input type="password" id="currPwd" placeholder="Current password"/></div>
+          <div class="inputWrap"><i class="fa-solid fa-key"></i><input type="password" id="newPwd" placeholder="New password (min 6)"/></div>
+          <button class="warningBtn" onclick="savePassword()"><i class="fa-solid fa-unlock-keyhole"></i> Update Password</button>
+        </div>
+
+        <!-- Preferences -->
+        <div class="proCard">
+          <h3><i class="fa-solid fa-sliders"></i> Preferences</h3>
+          <label class="switchRow">
+            <span><i class="fa-solid fa-moon"></i> Dark Mode</span>
+            <input type="checkbox" id="prefDark" onchange="applyDarkModeToggle()"/>
+          </label>
+          <label class="switchRow">
+            <span><i class="fa-regular fa-bell"></i> Notifications</span>
+            <input type="checkbox" id="prefNotif"/>
+          </label>
+          <div class="inputWrap"><i class="fa-solid fa-indian-rupee-sign"></i><input type="number" id="prefBudget" placeholder="Monthly budget (₹)"/></div>
+          <button class="successBtn" onclick="savePreferences()"><i class="fa-solid fa-floppy-disk"></i> Save Preferences</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Edit Expense Modal -->
   <div id="editModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeEditModal()">&times;</span>
-      <h3>Edit Expense</h3>
-      <input type="number" id="editAmount" placeholder="Amount">
-      <select id="editCategory">
-        <option value="">Select Category</option>
-        <option value="Food">Food</option>
-        <option value="Transport">Transport</option>
-        <option value="Shopping">Shopping</option>
-        <option value="Bills">Bills</option>
-        <option value="Entertainment">Entertainment</option>
-        <option value="Other">Other</option>
-      </select>
-      <input type="text" id="editDescription" placeholder="Description">
-      <button onclick="updateExpense()">Update Expense</button>
+    <div class="modalContent proCard">
+      <h3><i class="fa-solid fa-pen-to-square"></i> Edit Expense</h3>
+      <div class="grid2">
+        <input type="number" id="editAmount" placeholder="Amount"/>
+        <select id="editCategory">
+          <option value="Food">Food</option>
+          <option value="Transport">Transport</option>
+          <option value="Shopping">Shopping</option>
+          <option value="Bills">Bills</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Health">Health</option>
+          <option value="Education">Education</option>
+        </select>
+      </div>
+      <div class="grid2">
+        <input type="date" id="editDate"/>
+        <input type="text" id="editDescription" placeholder="Description"/>
+      </div>
+      <button class="updateBtn" onclick="updateExpense()"><i class="fa-solid fa-check"></i> Update</button>
+      <button class="closeBtn" onclick="closeEditModal()"><i class="fa-solid fa-xmark"></i> Cancel</button>
     </div>
   </div>
 

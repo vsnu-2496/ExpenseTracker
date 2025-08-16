@@ -1,93 +1,413 @@
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
+/* Reset & base */
+* {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+}
+:root {
+  --bg: #f5f5f5;
+  --card: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --primary: #4f46e5;
+  --primary-2: #6366f1;
+  --success: #16a34a;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+body {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif;
 }
 
-.container {
-  max-width: 600px;
-  margin: 50px auto;
-  background: #fff;
-  padding: 30px;
+/* Dark theme */
+body.dark {
+  --bg: #0f172a;
+  --card: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+body.dark .sidebar {
+  background: #0b1022;
+}
+body.dark input,
+body.dark select {
+  background: #0b1220;
+  color: var(--text);
+  border-color: #223;
+}
+body.dark .proCard,
+body.dark .card {
+  background: var(--card);
+}
+body.dark .expense-item {
+  background: var(--card);
+}
+body.dark .logoutBtn {
+  background: #dc2626;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background: #12172b;
+  color: #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 16px;
+  gap: 16px;
+}
+.sidebar .logo {
+  font-weight: 800;
+  font-size: 1.2rem;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.sidebar nav ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sidebar nav li {
+  padding: 12px 12px;
   border-radius: 10px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-}
-
-h2 {
-  text-align: center;
-  color: #333;
-}
-
-.auth-box input, .expense-form input, .expense-form select {
-  width: calc(100% - 20px);
-  padding: 10px;
-  margin: 8px 0;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
-
-.auth-box button, .expense-form button {
-  width: 100%;
-  padding: 10px;
-  background: #007bff;
-  border: none;
-  color: white;
-  font-weight: bold;
-  border-radius: 5px;
   cursor: pointer;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  transition: 0.2s;
+}
+.sidebar nav li:hover {
+  background: #1f2540;
+  color: #fff;
 }
 
-.auth-box button:hover, .expense-form button:hover {
-  background: #0056b3;
+/* Main */
+.mainContent {
+  flex: 1;
+  padding: 20px;
 }
-
-.auth-box p {
-  text-align: center;
-  font-size: 0.9em;
-}
-
-.auth-box span {
-  color: #007bff;
-  cursor: pointer;
-}
-
-.expense-list .expense-item {
+header {
   display: flex;
   justify-content: space-between;
-  background: #f1f1f1;
-  margin: 5px 0;
-  padding: 10px;
-  border-radius: 5px;
+  align-items: center;
+  margin-bottom: 18px;
 }
-
-.expense-item button {
-  margin-left: 5px;
-  padding: 5px 8px;
-  font-size: 0.9em;
+.userHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 100;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
+.headerBtns {
+  display: flex;
+  gap: 10px;
 }
-
-.modal-content {
-  background: #fff;
-  margin: 10% auto;
-  padding: 20px;
-  max-width: 400px;
+.iconBtn {
+  background: var(--card);
+  border: none;
+  box-shadow: var(--shadow);
+  padding: 8px 10px;
   border-radius: 10px;
-  position: relative;
+  cursor: pointer;
+}
+.logoutBtn {
+  background: #ef4444;
+  border: none;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
 }
 
-.close {
-  position: absolute;
-  top: 10px; right: 15px;
-  font-size: 20px;
+/* Avatars */
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(0, 0, 0, 0.05);
+}
+.avatar.sm {
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Cards & grids */
+.proCard {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  margin-bottom: 18px;
+}
+.statsContainer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.card {
+  border-radius: 16px;
+  padding: 18px;
+  color: #0f172a;
+  box-shadow: var(--shadow);
+}
+.gradient1 {
+  background: linear-gradient(135deg, #a5b4fc, #c7d2fe);
+}
+.gradient2 {
+  background: linear-gradient(135deg, #fbbf24, #fde68a);
+}
+.gradient3 {
+  background: linear-gradient(135deg, #34d399, #a7f3d0);
+}
+.card h3 {
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+.card p {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+/* Auth */
+.authGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.authCard h2 {
+  margin-bottom: 12px;
+}
+.inputWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid #e5e7eb;
+  padding: 10px;
+  border-radius: 12px;
+  margin: 8px 0;
+}
+.inputWrap input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  color: var(--text);
+}
+.inputWrap.full {
+  grid-column: 1/-1;
+}
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.rowBetween {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 6px 0;
+}
+
+/* Buttons */
+.primaryBtn,
+.successBtn,
+.warningBtn,
+.linkBtn,
+.addBtn,
+.updateBtn,
+.closeBtn {
+  border: none;
+  border-radius: 12px;
   cursor: pointer;
+  padding: 10px 14px;
+  box-shadow: var(--shadow);
+}
+.primaryBtn {
+  background: var(--primary);
+  color: #fff;
+}
+.successBtn {
+  background: var(--success);
+  color: #fff;
+}
+.warningBtn {
+  background: var(--warn);
+  color: #1f2937;
+}
+.linkBtn {
+  background: transparent;
+  color: var(--primary);
+  text-decoration: underline;
+  box-shadow: none;
+}
+.addBtn {
+  background: #8b5cf6;
+  color: #fff;
+}
+.updateBtn {
+  background: #22c55e;
+  color: #0b1220;
+}
+.closeBtn {
+  background: var(--danger);
+  color: #fff;
+  margin-left: 8px;
+}
+
+/* Add Expense Form */
+.add-expense-form {
+  display: grid;
+  grid-template-columns: 150px 150px 1fr auto;
+  gap: 10px;
+  background: var(--card);
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  align-items: center;
+}
+.add-expense-form input,
+.add-expense-form select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  outline: none;
+  font-size: 0.9rem;
+}
+.add-expense-form input:focus,
+.add-expense-form select:focus {
+  border-color: var(--primary);
+}
+.add-expense-form button {
+  background: var(--primary);
+  color: #fff;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.add-expense-form button:hover {
+  background: var(--primary-2);
+}
+
+/* Filters */
+.filterContainer {
+  display: grid;
+  grid-template-columns: 1fr 200px 180px auto;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.filterContainer input,
+.filterContainer select {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+/* Expense list */
+.expenseList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.expense-item {
+  background: var(--card);
+  padding: 12px 14px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow);
+}
+.expense-item span {
+  font-weight: 500;
+}
+.expense-actions button {
+  margin-left: 6px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.expense-actions .edit {
+  background: #38bdf8;
+  color: #0b1220;
+}
+.expense-actions .del {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* Settings */
+.settingsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.profileRow {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.grow {
+  flex: 1;
+}
+.switchRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+}
+.modalContent {
+  max-width: 560px;
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .statsContainer {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .settingsGrid {
+    grid-template-columns: 1fr;
+  }
+  .authGrid {
+    grid-template-columns: 1fr;
+  }
+  .filterContainer {
+    grid-template-columns: 1fr 1fr;
+  }
+  .sidebar {
+    display: none; /* hide sidebar on small screens */
+  }
+  .add-expense-form {
+    grid-template-columns: 1fr;
+  }
 }

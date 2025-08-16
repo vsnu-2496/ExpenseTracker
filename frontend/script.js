@@ -1,151 +1,241 @@
-let currentUserId = null;
-let editExpenseId = null;
-let chartInstance = null;
+// ====== GLOBAL STATE ======
+let users = JSON.parse(localStorage.getItem("users")) || [];
+let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+
+// ====== TAB SWITCHER ======
+function showTab(tabId) {
+  document.querySelectorAll(".tabContent").forEach(t => t.style.display = "none");
+  document.getElementById(tabId).style.display = "block";
+}
+
+// ====== AUTH ======
+function showRegister() {
+  document.getElementById("loginDiv").style.display = "none";
+  document.getElementById("registerDiv").style.display = "block";
+}
 
 function showLogin() {
-  document.getElementById('registerDiv').style.display = 'none';
-  document.getElementById('loginDiv').style.display = 'block';
+  document.getElementById("loginDiv").style.display = "block";
+  document.getElementById("registerDiv").style.display = "none";
 }
 
-function showRegister() {
-  document.getElementById('loginDiv').style.display = 'none';
-  document.getElementById('registerDiv').style.display = 'block';
+function register() {
+  const name = document.getElementById("regName").value;
+  const email = document.getElementById("regEmail").value;
+  const password = document.getElementById("regPassword").value;
+
+  if (!name || !email || !password) return alert("Please fill all fields");
+  if (users.some(u => u.email === email)) return alert("Email already registered");
+
+  const newUser = { name, email, password, avatar: "", preferences: {} };
+  users.push(newUser);
+  localStorage.setItem("users", JSON.stringify(users));
+  alert("Registered successfully! Please login.");
+  showLogin();
 }
 
-// Register
-async function register() {
-  const name = document.getElementById('regName').value;
-  const email = document.getElementById('regEmail').value;
-  const password = document.getElementById('regPassword').value;
+function login() {
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
 
-  const res = await fetch('http://localhost:5000/api/user/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password })
-  });
+  const user = users.find(u => u.email === email && u.password === password);
+  if (!user) return alert("Invalid credentials");
 
-  const data = await res.json();
-  alert(data.message);
-}
+  currentUser = user;
+  localStorage.setItem("currentUser", JSON.stringify(currentUser));
 
-// Login
-async function login() {
-  const email = document.getElementById('loginEmail').value;
-  const password = document.getElementById('loginPassword').value;
-
-  const res = await fetch('http://localhost:5000/api/user/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-
-  const data = await res.json();
-  alert(data.message);
-
-  if (res.ok) {
-    currentUserId = data.user._id;
-    document.getElementById('loginDiv').style.display = 'none';
-    document.getElementById('dashboardDiv').style.display = 'block';
-    loadExpenses();
-  }
-}
-
-// Add Expense
-async function addExpense() {
-  const amount = document.getElementById('amount').value;
-  const category = document.getElementById('category').value;
-  const description = document.getElementById('description').value;
-
-  const res = await fetch('http://localhost:5000/api/expense/add', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId: currentUserId, amount, category, description })
-  });
-
-  const data = await res.json();
-  alert(data.message);
+  document.getElementById("userName").textContent = user.name;
+  document.getElementById("userAvatarHeader").src = user.avatar || "https://via.placeholder.com/40";
+  showTab("dashboardTab");
+  loadDashboard();
   loadExpenses();
 }
 
-// Load Expenses + update chart
-async function loadExpenses() {
-  const res = await fetch(`http://localhost:5000/api/expense/${currentUserId}`);
-  const expenses = await res.json();
+function logout() {
+  currentUser = null;
+  localStorage.removeItem("currentUser");
+  showTab("authTab");
+}
 
-  const list = document.getElementById('expenseList');
-  list.innerHTML = '';
+// ====== EXPENSES ======
+function addExpense() {
+  const amount = +document.getElementById("amount").value;
+  const category = document.getElementById("category").value;
+  const date = document.getElementById("date").value;
+  const description = document.getElementById("description").value;
 
-  let total = 0;
-  const categoryTotals = {};
+  if (!amount || !date || !description) return alert("Fill all fields");
 
-  expenses.forEach(exp => {
-    total += Number(exp.amount);
-    categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + Number(exp.amount);
+  const expense = { id: Date.now(), user: currentUser.email, amount, category, date, description };
+  expenses.push(expense);
+  localStorage.setItem("expenses", JSON.stringify(expenses));
 
-    const div = document.createElement('div');
-    div.className = 'expense-item';
-    div.innerHTML = `
-      ${exp.category}: ₹${exp.amount} - ${exp.description}
-      <div>
-        <button onclick="showEditModal('${exp._id}', ${exp.amount}, '${exp.category}', '${exp.description}')">Edit</button>
-        <button onclick="deleteExpense('${exp._id}')">Delete</button>
-      </div>
-    `;
-    list.appendChild(div);
+  document.getElementById("amount").value = "";
+  document.getElementById("description").value = "";
+  loadExpenses();
+  loadDashboard();
+}
+
+function loadExpenses() {
+  const listDiv = document.getElementById("expenseList");
+  const filterCategory = document.getElementById("filterCategory").value;
+  const filterMonth = document.getElementById("filterMonth").value;
+  const search = document.getElementById("searchDesc").value.toLowerCase();
+
+  const userExpenses = expenses.filter(e => e.user === currentUser.email);
+
+  const filtered = userExpenses.filter(e => {
+    return (!filterCategory || e.category === filterCategory) &&
+           (!filterMonth || e.date.startsWith(filterMonth)) &&
+           (!search || e.description.toLowerCase().includes(search));
   });
 
-  document.getElementById('totalExpense').innerText = total;
+  listDiv.innerHTML = filtered.map(e => `
+    <div class="expenseItem">
+      <span>₹${e.amount} - ${e.category} - ${e.date}</span>
+      <span>${e.description}</span>
+      <button onclick="editExpense(${e.id})">Edit</button>
+      <button onclick="deleteExpense(${e.id})">Delete</button>
+    </div>
+  `).join("");
+}
 
-  // Pie chart
-  const ctx = document.getElementById('expenseChart').getContext('2d');
-  if (chartInstance) chartInstance.destroy();
-  chartInstance = new Chart(ctx, {
-    type: 'pie',
+function editExpense(id) {
+  const exp = expenses.find(e => e.id === id);
+  if (!exp) return;
+
+  document.getElementById("editAmount").value = exp.amount;
+  document.getElementById("editCategory").value = exp.category;
+  document.getElementById("editDate").value = exp.date;
+  document.getElementById("editDescription").value = exp.description;
+
+  document.getElementById("editModal").style.display = "block";
+  document.getElementById("editModal").dataset.id = id;
+}
+
+function closeEditModal() {
+  document.getElementById("editModal").style.display = "none";
+}
+
+function updateExpense() {
+  const id = +document.getElementById("editModal").dataset.id;
+  const exp = expenses.find(e => e.id === id);
+
+  exp.amount = +document.getElementById("editAmount").value;
+  exp.category = document.getElementById("editCategory").value;
+  exp.date = document.getElementById("editDate").value;
+  exp.description = document.getElementById("editDescription").value;
+
+  localStorage.setItem("expenses", JSON.stringify(expenses));
+  closeEditModal();
+  loadExpenses();
+  loadDashboard();
+}
+
+function deleteExpense(id) {
+  expenses = expenses.filter(e => e.id !== id);
+  localStorage.setItem("expenses", JSON.stringify(expenses));
+  loadExpenses();
+  loadDashboard();
+}
+
+// ====== DASHBOARD ======
+function loadDashboard() {
+  const userExpenses = expenses.filter(e => e.user === currentUser.email);
+  const total = userExpenses.reduce((sum, e) => sum + e.amount, 0);
+  document.getElementById("totalExpense").textContent = "₹" + total;
+
+  let categoryTotals = {};
+  userExpenses.forEach(e => {
+    categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount;
+  });
+  const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
+  document.getElementById("topCategory").textContent = topCategory ? topCategory[0] : "-";
+
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const monthly = userExpenses.filter(e => e.date.startsWith(thisMonth))
+                               .reduce((s, e) => s + e.amount, 0);
+  document.getElementById("monthlyExpense").textContent = "₹" + monthly;
+
+  const ctx = document.getElementById("expenseChart");
+  new Chart(ctx, {
+    type: "pie",
     data: {
       labels: Object.keys(categoryTotals),
-      datasets: [{
-        data: Object.values(categoryTotals),
-        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
-      }]
+      datasets: [{ data: Object.values(categoryTotals) }]
     }
   });
 }
 
-// Delete Expense
-async function deleteExpense(id) {
-  const res = await fetch(`http://localhost:5000/api/expense/${id}`, { method: 'DELETE' });
-  const data = await res.json();
-  alert(data.message);
-  loadExpenses();
+// ====== SETTINGS ======
+function saveProfile() {
+  currentUser.name = document.getElementById("setName").value;
+  currentUser.email = document.getElementById("setEmail").value;
+  currentUser.avatar = document.getElementById("setAvatar").value;
+
+  users = users.map(u => u.email === currentUser.email ? currentUser : u);
+  localStorage.setItem("users", JSON.stringify(users));
+  localStorage.setItem("currentUser", JSON.stringify(currentUser));
+
+  document.getElementById("userName").textContent = currentUser.name;
+  document.getElementById("userAvatarHeader").src = currentUser.avatar || "https://via.placeholder.com/40";
+  alert("Profile updated");
 }
 
-// Edit Expense
-function showEditModal(id, amount, category, description) {
-  editExpenseId = id;
-  document.getElementById('editAmount').value = amount;
-  document.getElementById('editCategory').value = category;
-  document.getElementById('editDescription').value = description;
-  document.getElementById('editModal').style.display = 'block';
+function savePassword() {
+  const curr = document.getElementById("currPwd").value;
+  const newPwd = document.getElementById("newPwd").value;
+
+  if (curr !== currentUser.password) return alert("Wrong current password");
+  currentUser.password = newPwd;
+  users = users.map(u => u.email === currentUser.email ? currentUser : u);
+  localStorage.setItem("users", JSON.stringify(users));
+  localStorage.setItem("currentUser", JSON.stringify(currentUser));
+  alert("Password updated");
 }
 
-function closeEditModal() {
-  document.getElementById('editModal').style.display = 'none';
+function savePreferences() {
+  currentUser.preferences = {
+    dark: document.getElementById("prefDark").checked,
+    notif: document.getElementById("prefNotif").checked,
+    budget: document.getElementById("prefBudget").value
+  };
+  localStorage.setItem("currentUser", JSON.stringify(currentUser));
+  alert("Preferences saved");
+  applyDarkModeToggle();
 }
 
-// Update Expense
-async function updateExpense() {
-  const amount = document.getElementById('editAmount').value;
-  const category = document.getElementById('editCategory').value;
-  const description = document.getElementById('editDescription').value;
+function applyDarkModeToggle() {
+  const dark = document.getElementById("prefDark").checked;
+  document.body.className = dark ? "dark" : "light";
+}
 
-  const res = await fetch(`http://localhost:5000/api/expense/${editExpenseId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount, category, description })
+// ====== EXPORT ======
+function exportCSV() {
+  const userExpenses = expenses.filter(e => e.user === currentUser.email);
+  let csv = "Amount,Category,Date,Description\n";
+  userExpenses.forEach(e => {
+    csv += `${e.amount},${e.category},${e.date},${e.description}\n`;
   });
 
-  const data = await res.json();
-  alert(data.message);
-  closeEditModal();
-  loadExpenses();
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "expenses.csv";
+  a.click();
 }
+
+// ====== INIT ======
+window.onload = () => {
+  if (currentUser) {
+    showTab("dashboardTab");
+    document.getElementById("userName").textContent = currentUser.name;
+    document.getElementById("userAvatarHeader").src = currentUser.avatar || "https://via.placeholder.com/40";
+    loadDashboard();
+    loadExpenses();
+  } else {
+    showTab("authTab");
+  }
+};
